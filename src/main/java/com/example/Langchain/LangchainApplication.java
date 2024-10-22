@@ -15,10 +15,7 @@ public class LangchainApplication {
 
 	public static void main(String[] args) {
 		SpringApplication.run(LangchainApplication.class, args);
-		PasswordEncoder encoder = new BCryptPasswordEncoder();
-		String rawPassword = "123";
-		String encodedPassword = encoder.encode(rawPassword);
-		System.out.println(encodedPassword);
+		System.out.println("Chạy API thành công");
 
 	}
 
