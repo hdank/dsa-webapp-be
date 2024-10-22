@@ -1,10 +1,12 @@
 package com.example.Langchain.controller;
 
+import com.example.Langchain.entity.Session;
 import com.example.Langchain.entity.User;
 import com.example.Langchain.repository.SessionRepository;
 import com.example.Langchain.repository.UserRepository;
 import com.example.Langchain.service.AuthResponse;
 import com.example.Langchain.service.AuthService;
+import com.example.Langchain.service.SessionService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
@@ -22,6 +24,8 @@ import org.springframework.security.web.authentication.logout.SecurityContextLog
 import org.springframework.web.bind.annotation.*;
 
 import javax.swing.text.html.Option;
+import java.util.Calendar;
+import java.util.Date;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -37,6 +41,9 @@ public class UserController {
     @Autowired
     private UserRepository userRepository;
 
+    @Autowired SessionRepository ssRepository;
+    @Autowired
+    private SessionService sessionService;
 //    private final AuthenticationManager authenticationManager;
 
     //check mssv va password
@@ -68,8 +75,21 @@ public class UserController {
             user.setBirth(userData.getBirth());
             String token = UUID.randomUUID().toString();
             user.setToken(token);
-            userRepository.save(user);
 
+            // Create session when sign-up
+            Session session = new Session();
+            session.setUser(user);
+            session.setToken(token);
+
+            //Set exp for token
+            Calendar calendar = Calendar.getInstance();
+            calendar.setTime(new Date());
+            calendar.add(Calendar.MINUTE,5);
+            Date expiration = calendar.getTime();
+            session.setExp(expiration);
+
+            userRepository.save(user);
+            ssRepository.save(session);
             return ResponseEntity.ok(new AuthResponse(token, userData));
         }
         else{
@@ -78,11 +98,20 @@ public class UserController {
     }
     @GetMapping("/auto-login")
     public ResponseEntity<?> autologin(@RequestParam String token){
-        System.out.println("Received token: " + token);  // Debug print
+//        System.out.println("Received token: " + token);  // Debug print
         String user = authService.getUserBySessionToken(token);
-        System.out.println("User: " + user);// Debug print
+//        System.out.println("User: " + user);// Debug print
         if(user!= null){
-            return ResponseEntity.ok(user);
+            // Kiểm tra session
+            Session validSession = sessionService.getValidSession(user);
+            if (validSession!=null){
+                return ResponseEntity.ok(user);
+            }
+            else {
+                Optional<User> userOptional = userRepository.findByMssv(user);
+                userOptional.get().setToken(null);
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Session has expired. Please login again.");
+            }
         }
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
     }

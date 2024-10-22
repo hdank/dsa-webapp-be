@@ -11,9 +11,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
-import java.util.Map;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 @Service
@@ -23,19 +21,35 @@ public class AuthService {
 
     @Autowired
     private SessionRepository ssrepo;
+    @Autowired
+    private SessionService sessionService;
 
     public String login(String mssv, String password){
         PasswordEncoder encoder = new BCryptPasswordEncoder();
         Optional<User> userOptional = repo.findByMssv(mssv);
         if(userOptional.isPresent()) {
             User user = userOptional.get();
-            System.out.println("User found: " + user.getMssv());
             String encodedPassword = encoder.encode(password);
             if(encoder.matches(password, encodedPassword)) {
-                String token = UUID.randomUUID().toString();
-                user.setToken(token);
-                repo.save(user);
-                return token;
+                // Lấy Session phù hợp
+                Session validSession = sessionService.getValidSession(user.getMssv());
+                if(validSession !=null){
+                    return validSession.getToken();
+                }
+                else
+                {
+                    String token = UUID.randomUUID().toString();
+                    user.setToken(token);
+                    //Thêm session mới
+                    Session newSession = new Session();
+                    newSession.setUser(user);
+                    newSession.setToken(token);
+                    Date exp = new Date(System.currentTimeMillis() + 5 * 60 * 1000); // thời gian 5 phút
+                    newSession.setExp(exp);
+                    repo.save(user);
+                    ssrepo.save(newSession);
+                    return token;
+                }
             } else {
                 System.out.println("Password does not match");
             }
