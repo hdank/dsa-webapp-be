@@ -46,6 +46,9 @@ public class UserController {
         if (token == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
+
+        Optional<User> userOptional = userRepository.findByMssv(userData.getMssv());
+        userData = userOptional.get();
         System.out.println("Generated token: " + token); // Debugging output
         return ResponseEntity.ok(new AuthResponse(token, userData));
 

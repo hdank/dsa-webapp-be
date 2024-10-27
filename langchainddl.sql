@@ -3,9 +3,15 @@ drop table Subjects;
 select * from user;
 delete from user where mssv='12331232';
 select * from session;
+insert into user(mssv) values ('2111111359');
 update user
 set password = '$2a$10$Avz0wILFi8F/8lVcyCMBVemtK65vxiiv3fVmpi2ERIWQLkawXLk/K'
 where mssv = '2111111359';
+update user
+set roles = 'admin'
+where mssv = '2111111661';
+ALTER TABLE user
+ADD roles varchar(255);
 select * from Subjects;
 select * from Chapter;
 delete from Chapter where Id='CHƯƠNG_1';
