@@ -1,29 +1,23 @@
 package com.example.Langchain.controller;
 
+import com.example.Langchain.config.RoleConfig;
+import com.example.Langchain.entity.Chat;
 import com.example.Langchain.entity.User;
-import com.example.Langchain.repository.SessionRepository;
+import com.example.Langchain.repository.ChatRepository;
 import com.example.Langchain.repository.UserRepository;
 import com.example.Langchain.service.AuthResponse;
 import com.example.Langchain.service.AuthService;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
+import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.BadCredentialsException;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.security.web.authentication.logout.SecurityContextLogoutHandler;
 import org.springframework.web.bind.annotation.*;
 
-import javax.swing.text.html.Option;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
 
 @RestController
 @RequestMapping("/user")
@@ -36,6 +30,12 @@ public class UserController {
 
     @Autowired
     private UserRepository userRepository;
+
+    @Autowired
+    private ChatRepository chatRepository;
+
+    @Autowired
+    private ObjectMapper objectMapper;
 
 //    private final AuthenticationManager authenticationManager;
 
@@ -68,14 +68,39 @@ public class UserController {
             user.setBirth(userData.getBirth());
             String token = UUID.randomUUID().toString();
             user.setToken(token);
+            user.setRole(RoleConfig.user.toString());
             userRepository.save(user);
 
-            return ResponseEntity.ok(new AuthResponse(token, userData));
+            return ResponseEntity.ok(new AuthResponse(token, user));
         }
         else{
             return ResponseEntity.status(HttpStatus.CONFLICT).body("Already have a user with this mssv");
         }
     }
+
+    @DeleteMapping("/delete-a-user")
+    public ResponseEntity<?> DeleteAUserApi(@RequestBody String requestBody) {
+        try {
+            // Extract mssv from the JSON string
+            String mssv = objectMapper.readTree(requestBody).get("mssv").asText();
+            System.out.println(mssv);
+
+            Optional<User> user = userRepository.findByMssv(mssv);
+            System.out.println(user);
+
+            if (user.isPresent()) {
+                userRepository.deleteById(user.get().getMssv());
+                return ResponseEntity.ok("Delete succeeded");
+            } else {
+                return ResponseEntity.status(HttpStatus.CONFLICT).body("No user with this mssv");
+            }
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Invalid request format");
+        }
+    }
+
+
+
     @GetMapping("/auto-login")
     public ResponseEntity<?> autologin(@RequestParam String token){
         System.out.println("Received token: " + token);  // Debug print
@@ -86,10 +111,12 @@ public class UserController {
         }
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
     }
+
     @GetMapping("/home")
     public ResponseEntity<String> homePage(){
         return ResponseEntity.ok("home");
     }
+
     @GetMapping("/logout")
     public ResponseEntity<?> logout(@RequestParam String token) {
         Optional<User> userOptional = userRepository.findByToken(token);
@@ -103,5 +130,25 @@ public class UserController {
 
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Invalid token");
     }
-
+    @GetMapping("/is-admin-or-user")
+    public ResponseEntity<?> IsAdminOrUser(@RequestParam String token){
+        Optional<User> userOptional = userRepository.findByToken(token);
+        if(userOptional.isPresent()){
+            String role = userOptional.get().getRole();
+            Map<String, String> response = new HashMap<>();
+            response.put("role", role);
+            return ResponseEntity.ok(response);
+        }
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Invalid token");
+    }
+    @GetMapping("/get-all-user")
+    public ResponseEntity<?> GetAllUser(){
+        List<User> userList = userRepository.findAll();
+        return ResponseEntity.ok(userList);
+    }
+    @GetMapping("/get-all-user-chat")
+    public ResponseEntity<?> GetAllUserChat(){
+        List<Chat> chatList = chatRepository.findAll();
+        return ResponseEntity.ok(chatList);
+    }
 }
