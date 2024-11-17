@@ -32,6 +32,8 @@ public class User {
     private Date birth;
     @Column(name = "token")
     private String token;
+    @Column(name = "role")
+    private String role;
     public String getMssv() {
         return mssv;
     }
@@ -105,5 +107,13 @@ public class User {
 
     public void setBirth(Date birth) {
         this.birth = birth;
+    }
+
+    public String getRole() {
+        return role;
+    }
+
+    public void setRole(String role) {
+        this.role = role;
     }
 }
