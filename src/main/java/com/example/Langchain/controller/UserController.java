@@ -10,6 +10,8 @@ import com.example.Langchain.service.AuthService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import org.json.JSONObject;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -25,6 +27,7 @@ import java.util.*;
 @CrossOrigin(origins = "http://localhost:4200/")
 
 public class UserController {
+    private static final Logger log = LoggerFactory.getLogger(UserController.class);
     @Autowired
     private AuthService authService;
 
@@ -150,5 +153,10 @@ public class UserController {
     public ResponseEntity<?> GetAllUserChat(){
         List<Chat> chatList = chatRepository.findAll();
         return ResponseEntity.ok(chatList);
+    }
+    @GetMapping("/get-user-by-token")
+    public ResponseEntity<?> GetUserByMSSV(@RequestParam String token){
+        Optional<User> userOptional = userRepository.findByToken(token);
+        return ResponseEntity.ok(userOptional);
     }
 }
