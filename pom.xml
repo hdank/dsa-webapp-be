@@ -50,6 +50,11 @@
 
 	<dependencies>
 		<dependency>
+			<groupId>org.json</groupId>
+			<artifactId>json</artifactId>
+			<version>20210307</version>
+		</dependency>
+		<dependency>
 			<groupId>dev.langchain4j</groupId>
 			<artifactId>langchain4j-open-ai-spring-boot-starter</artifactId>
 			<version>0.34.0</version>
