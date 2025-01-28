@@ -3,6 +3,8 @@ package com.example.Langchain.service;
 import com.example.Langchain.entity.FileEntity;
 import com.example.Langchain.repository.FileRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 import java.io.File;
@@ -31,8 +33,11 @@ public class FileService {
         return fileRepository.save(fileEntity);
     }
 
-    public List<FileEntity> getAllFiles() {
-        return fileRepository.findAll();
+    public Page<FileEntity> getAllFiles(String searchTerm, Pageable pageable) {
+        if (searchTerm != null && !searchTerm.isEmpty()) {
+            return fileRepository.findByFileNameContainingIgnoreCase(searchTerm, pageable);
+        }
+        return fileRepository.findAll(pageable);
     }
 
     public Optional<FileEntity> getFile(Long id) {

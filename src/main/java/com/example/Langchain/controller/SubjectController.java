@@ -7,6 +7,8 @@ import com.example.Langchain.service.FileService;
 import lombok.RequiredArgsConstructor;
 import org.apache.tomcat.util.json.JSONParser;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -44,8 +46,10 @@ public class SubjectController {
     }
 
     @GetMapping("/get-all-files")
-    public List<FileEntity> getAllFiles() {
-        return fileService.getAllFiles();
+    public Page<FileEntity> getAllFiles(Pageable pageable,
+                                        @RequestParam(value = "searchTerm", required = false) String searchTerm) {
+        System.out.println("Search Term: " + searchTerm);
+        return (Page<FileEntity>) fileService.getAllFiles(searchTerm, pageable);
     }
 
     @PostMapping("/upload")
