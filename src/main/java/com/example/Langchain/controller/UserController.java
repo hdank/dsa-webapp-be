@@ -2,14 +2,16 @@ package com.example.Langchain.controller;
 
 import com.example.Langchain.config.RoleConfig;
 import com.example.Langchain.entity.Chat;
+import com.example.Langchain.entity.Conversation;
 import com.example.Langchain.entity.User;
 import com.example.Langchain.repository.ChatRepository;
+import com.example.Langchain.repository.ConversationRepository;
 import com.example.Langchain.repository.UserRepository;
 import com.example.Langchain.service.AuthResponse;
 import com.example.Langchain.service.AuthService;
+import com.example.Langchain.service.ConversationService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
-import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -36,6 +38,12 @@ public class UserController {
 
     @Autowired
     private ObjectMapper objectMapper;
+
+    @Autowired
+    private ConversationRepository conversationRepository;
+
+    @Autowired
+    private ConversationService conversationService;
 
 //    private final AuthenticationManager authenticationManager;
 
@@ -151,4 +159,31 @@ public class UserController {
         List<Chat> chatList = chatRepository.findAll();
         return ResponseEntity.ok(chatList);
     }
+
+    @GetMapping("/get-conversations")
+    public ResponseEntity<List<Conversation>> GetUserConversation(@RequestParam String token){
+        System.out.printf(token);
+        List<Conversation> conversations = conversationService.getConversationsByToken(token);
+        if (conversations.isEmpty()) {
+            return ResponseEntity.notFound().build();  // Trả về 404 nếu không có cuộc trò chuyện nào
+        } else {
+            return ResponseEntity.ok(conversations);  // Trả về danh sách Conversation
+        }
+    }
+
+    @PostMapping("/set-new-conversations")
+    public ResponseEntity<?> SetNewConversation(@RequestBody Conversation conversationData) {
+        try {
+            Conversation newConversation = new Conversation();
+            newConversation.setId(conversationData.getId());
+            newConversation.setTitle(conversationData.getTitle());
+            newConversation.setUserToken(conversationData.getUserToken());
+            conversationRepository.save(newConversation);
+            return ResponseEntity.ok(newConversation);
+        } catch (Exception e) {
+            // Log lỗi và trả về thông báo lỗi
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error saving conversation");
+        }
+    }
+
 }
