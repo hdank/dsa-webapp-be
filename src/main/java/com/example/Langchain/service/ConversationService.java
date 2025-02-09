@@ -13,9 +13,9 @@ public class ConversationService {
     @Autowired
     private ConversationRepository conversationRepository;
 
-    // Phương thức tìm kiếm tất cả Conversation theo userToken
-    public List<Conversation> getConversationsByToken(String token) {
-        return conversationRepository.findByUserToken(token);  // Trả về danh sách Conversation
+    // Phương thức tìm kiếm tất cả Conversation theo userId
+    public List<Conversation> getConversationsById(String id) {
+        return conversationRepository.findByUserId(id);  // Trả về danh sách Conversation
     }
 
     // Phương thức để lưu hoặc cập nhật Conversation

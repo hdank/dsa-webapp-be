@@ -17,18 +17,18 @@ public class Conversation {
 
     private String title;
 
-    @Column(name = "user_token")
-    private String userToken;
+    @Column(name = "user_id")
+    private String userId;
 
     @Column(name = "created_date")
     private LocalDateTime createdDate;
 
     public Conversation() {}
 
-    public Conversation(String id, String title, String userToken) {
+    public Conversation(String id, String title, String userId) {
         this.id = id;
         this.title = title;
-        this.userToken = userToken;
+        this.userId = userId;
     }
 
     @PrePersist
@@ -56,12 +56,12 @@ public class Conversation {
         this.title = title;
     }
 
-    public String getUserToken() {
-        return userToken;
+    public String getUserId() {
+        return userId;
     }
 
-    public void setUserToken(String userToken) {
-        this.userToken = userToken;
+    public void setUserId(String userId) {
+        this.userId = userId;
     }
 
     public LocalDateTime getCreatedDate() {

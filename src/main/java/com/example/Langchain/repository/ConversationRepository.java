@@ -7,5 +7,5 @@ import java.util.List;
 
 public interface ConversationRepository extends JpaRepository<Conversation, String> {
     // Trả về danh sách Conversation theo userToken
-    List<Conversation> findByUserToken(String token);
+    List<Conversation> findByUserId(String id);
 }

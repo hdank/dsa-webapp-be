@@ -12,6 +12,7 @@ import com.example.Langchain.service.AuthService;
 import com.example.Langchain.service.ConversationService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
+import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -24,7 +25,7 @@ import java.util.*;
 @RestController
 @RequestMapping("/user")
 @RequiredArgsConstructor
-@CrossOrigin(origins = "http://localhost:4200/")
+@CrossOrigin(origins = "http://localhost:4200")
 
 public class UserController {
     @Autowired
@@ -49,15 +50,15 @@ public class UserController {
 
     //check mssv va password
     @PostMapping("/login")
-    public ResponseEntity<?> login(@RequestBody User userData){
-        String token  = authService.login(userData.getMssv(), userData.getPassword());
-        if (token == null) {
+    public ResponseEntity<?> login(@NotNull @RequestBody User userData){
+        User user  = authService.login(userData.getMssv(), userData.getPassword());
+        if (user == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
-        System.out.println("Generated token: " + token); // Debugging output
-        return ResponseEntity.ok(new AuthResponse(token, userData));
+        return ResponseEntity.ok(new AuthResponse(user.getToken(),user.getMssv(),user.getRole(), userData));
 
     }
+
     @PostMapping("/sign-up")
     public ResponseEntity<?> signup(@RequestBody User userData){
         if(userRepository.findByMssv(userData.getMssv()).isEmpty()){
@@ -79,7 +80,7 @@ public class UserController {
             user.setRole(RoleConfig.user.toString());
             userRepository.save(user);
 
-            return ResponseEntity.ok(new AuthResponse(token, user));
+            return ResponseEntity.ok(new AuthResponse(token, user.getMssv(), user.getRole(), user));
         }
         else{
             return ResponseEntity.status(HttpStatus.CONFLICT).body("Already have a user with this mssv");
@@ -106,8 +107,6 @@ public class UserController {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Invalid request format");
         }
     }
-
-
 
     @GetMapping("/auto-login")
     public ResponseEntity<?> autologin(@RequestParam String token){
@@ -138,6 +137,7 @@ public class UserController {
 
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Invalid token");
     }
+
     @GetMapping("/is-admin-or-user")
     public ResponseEntity<?> IsAdminOrUser(@RequestParam String token){
         Optional<User> userOptional = userRepository.findByToken(token);
@@ -149,11 +149,13 @@ public class UserController {
         }
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Invalid token");
     }
+
     @GetMapping("/get-all-user")
     public ResponseEntity<?> GetAllUser(){
         List<User> userList = userRepository.findAll();
         return ResponseEntity.ok(userList);
     }
+
     @GetMapping("/get-all-user-chat")
     public ResponseEntity<?> GetAllUserChat(){
         List<Chat> chatList = chatRepository.findAll();
@@ -161,11 +163,12 @@ public class UserController {
     }
 
     @GetMapping("/get-conversations")
-    public ResponseEntity<List<Conversation>> GetUserConversation(@RequestParam String token){
-        System.out.printf(token);
-        List<Conversation> conversations = conversationService.getConversationsByToken(token);
+    public ResponseEntity<List<Conversation>> GetUserConversation(@RequestParam String id){
+        System.out.print("called get conversation");
+        System.out.printf(id);
+        List<Conversation> conversations = conversationService.getConversationsById(id);
         if (conversations.isEmpty()) {
-            return ResponseEntity.notFound().build();  // Trả về 404 nếu không có cuộc trò chuyện nào
+            return ResponseEntity.ok().body(new ArrayList<Conversation>()); // Danh sách trống
         } else {
             return ResponseEntity.ok(conversations);  // Trả về danh sách Conversation
         }
@@ -177,7 +180,7 @@ public class UserController {
             Conversation newConversation = new Conversation();
             newConversation.setId(conversationData.getId());
             newConversation.setTitle(conversationData.getTitle());
-            newConversation.setUserToken(conversationData.getUserToken());
+            newConversation.setUserId(conversationData.getUserId());
             conversationRepository.save(newConversation);
             return ResponseEntity.ok(newConversation);
         } catch (Exception e) {
@@ -186,4 +189,12 @@ public class UserController {
         }
     }
 
+    @GetMapping("/get-user-by-token")
+    public ResponseEntity<Optional<User>> getUserBySessionToken(@RequestParam String token){
+        Optional<User> userOptional = userRepository.findByToken(token);
+        if(userOptional.isPresent()){
+            return ResponseEntity.ok(userOptional);
+        };
+        return null;
+    }
 }
