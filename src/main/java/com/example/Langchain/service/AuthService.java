@@ -24,7 +24,7 @@ public class AuthService {
     @Autowired
     private SessionRepository ssrepo;
 
-    public String login(String mssv, String password){
+    public User login(String mssv, String password){
         PasswordEncoder encoder = new BCryptPasswordEncoder();
         Optional<User> userOptional = repo.findByMssv(mssv);
         if(userOptional.isPresent()) {
@@ -35,7 +35,7 @@ public class AuthService {
                 String token = UUID.randomUUID().toString();
                 user.setToken(token);
                 repo.save(user);
-                return token;
+                return user;
             } else {
                 System.out.println("Password does not match");
             }
@@ -44,6 +44,7 @@ public class AuthService {
         }
         throw new RuntimeException("Invalid credentials");
     }
+
     public String getUserBySessionToken(String token){
         // Retrieve user based on the session token
         Optional<User> userOptional = repo.findByToken(token);
