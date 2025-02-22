@@ -22,7 +22,6 @@ import java.util.Optional;
 
 @RestController
 @RequestMapping("/subject")
-@CrossOrigin(origins = "http://localhost:4200/")
 public class SubjectController {
     @Autowired
     private SubjectRepository subjectRepository;
