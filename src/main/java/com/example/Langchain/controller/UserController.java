@@ -25,7 +25,7 @@ import java.util.*;
 @RestController
 @RequestMapping("/user")
 @RequiredArgsConstructor
-
+@CrossOrigin(origins = "http://localhost:4200/")
 
 public class UserController {
     @Autowired
@@ -50,18 +50,18 @@ public class UserController {
 
     //check mssv va password
     @PostMapping("/login")
-    public ResponseEntity<?> login(@NotNull @RequestBody User userData){
-        User user  = authService.login(userData.getMssv(), userData.getPassword());
+    public ResponseEntity<?> login(@NotNull @RequestBody User userData) {
+        User user = authService.login(userData.getMssv(), userData.getPassword());
         if (user == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
-        return ResponseEntity.ok(new AuthResponse(user.getToken(),user.getMssv(),user.getRole(), userData));
+        return ResponseEntity.ok(new AuthResponse(user.getToken(), user.getMssv(), user.getRole(), userData));
 
     }
 
     @PostMapping("/sign-up")
-    public ResponseEntity<?> signup(@RequestBody User userData){
-        if(userRepository.findByMssv(userData.getMssv()).isEmpty()){
+    public ResponseEntity<?> signup(@RequestBody User userData) {
+        if (userRepository.findByMssv(userData.getMssv()).isEmpty()) {
             User user = new User();
             user.setMssv(userData.getMssv());
             user.setEmail(userData.getEmail());
@@ -81,8 +81,7 @@ public class UserController {
             userRepository.save(user);
 
             return ResponseEntity.ok(new AuthResponse(token, user.getMssv(), user.getRole(), user));
-        }
-        else{
+        } else {
             return ResponseEntity.status(HttpStatus.CONFLICT).body("Already have a user with this mssv");
         }
     }
@@ -109,28 +108,28 @@ public class UserController {
     }
 
     @GetMapping("/auto-login")
-    public ResponseEntity<?> autologin(@RequestParam String token){
+    public ResponseEntity<?> autologin(@RequestParam String token) {
         System.out.println("Received token: " + token);  // Debug print
         String user = authService.getUserBySessionToken(token);
         System.out.println("User: " + user);// Debug print
-        if(user!= null){
+        if (user != null) {
             return ResponseEntity.ok(user);
         }
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
     }
 
     @GetMapping("/home")
-    public ResponseEntity<String> homePage(){
+    public ResponseEntity<String> homePage() {
         return ResponseEntity.ok("home");
     }
 
     @GetMapping("/logout")
     public ResponseEntity<?> logout(@RequestParam String token) {
         Optional<User> userOptional = userRepository.findByToken(token);
-        if(userOptional.isPresent()){
+        if (userOptional.isPresent()) {
             User user = userOptional.get();
             user.setToken(null);
-            System.out.println("User: "+user.getMssv()+ ", token: "+user.getToken());
+            System.out.println("User: " + user.getMssv() + ", token: " + user.getToken());
             userRepository.save(user);
             return ResponseEntity.ok("Logged out successfully");
         }
@@ -139,9 +138,9 @@ public class UserController {
     }
 
     @GetMapping("/is-admin-or-user")
-    public ResponseEntity<?> IsAdminOrUser(@RequestParam String token){
+    public ResponseEntity<?> IsAdminOrUser(@RequestParam String token) {
         Optional<User> userOptional = userRepository.findByToken(token);
-        if(userOptional.isPresent()){
+        if (userOptional.isPresent()) {
             String role = userOptional.get().getRole();
             Map<String, String> response = new HashMap<>();
             response.put("role", role);
@@ -151,19 +150,19 @@ public class UserController {
     }
 
     @GetMapping("/get-all-user")
-    public ResponseEntity<?> GetAllUser(){
+    public ResponseEntity<?> GetAllUser() {
         List<User> userList = userRepository.findAll();
         return ResponseEntity.ok(userList);
     }
 
     @GetMapping("/get-all-user-chat")
-    public ResponseEntity<?> GetAllUserChat(){
+    public ResponseEntity<?> GetAllUserChat() {
         List<Chat> chatList = chatRepository.findAll();
         return ResponseEntity.ok(chatList);
     }
 
     @GetMapping("/get-conversations")
-    public ResponseEntity<List<Conversation>> GetUserConversation(@RequestParam String id){
+    public ResponseEntity<List<Conversation>> GetUserConversation(@RequestParam String id) {
         System.out.print("called get conversation");
         System.out.printf(id);
         List<Conversation> conversations = conversationService.getConversationsById(id);
@@ -186,6 +185,47 @@ public class UserController {
         } catch (Exception e) {
             // Log lỗi và trả về thông báo lỗi
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error saving conversation");
+        }
+    }
+
+    @GetMapping("/get-conversation")
+    public ResponseEntity<?> getConversation(@RequestParam String id) {
+        Optional<Conversation> conversationOptional = conversationRepository.findById(id);
+        if (conversationOptional.isPresent()){
+            return ResponseEntity.ok(conversationOptional);
+        }
+            return null;
+    }
+
+    @GetMapping("/rename-conversation")
+    public ResponseEntity<?> renameConversation(@RequestParam String id, @RequestParam String name) {
+        Optional<Conversation> conversationOptional = conversationRepository.findById(id);
+        if (conversationOptional.isPresent()){
+            try {
+                Conversation Conversation = conversationOptional.get();
+                Conversation.setTitle(name);
+                conversationRepository.save(Conversation);
+                return ResponseEntity.ok(Conversation);
+            } catch (Exception e) {
+                // Log lỗi và trả về thông báo lỗi
+                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error saving conversation");
+            }
+        }
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Conversation not found");
+    }
+
+    @DeleteMapping("/delete-conversation")
+    public ResponseEntity<?> DeleteAConversationApi(@RequestParam String id) {
+        try {
+            Optional<Conversation> conversationOptional = conversationRepository.findById(id);
+            if (conversationOptional.isPresent()) {
+                conversationRepository.deleteById(conversationOptional.get().getId());
+                return ResponseEntity.ok("Delete succeeded");
+            } else {
+                return ResponseEntity.status(HttpStatus.CONFLICT).body("No conversation with this id");
+            }
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Invalid request format");
         }
     }
 
