@@ -4,7 +4,6 @@ import com.example.Langchain.entity.Session;
 import com.example.Langchain.entity.User;
 import com.example.Langchain.repository.SessionRepository;
 import com.example.Langchain.repository.UserRepository;
-import io.jsonwebtoken.Claims;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
